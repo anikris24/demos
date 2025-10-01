@@ -6,14 +6,29 @@ class Program{
 
     public static async Task Main()
     {
-        await ReceiveMessagesAsync("", "");
+        string connectionString = Environment.GetEnvironmentVariable("SERVICE_BUS_CONNECTION_STRING");
+        string queueName = Environment.GetEnvironmentVariable("SERVICE_BUS_QUEUE_NAME");
+
+        Console.WriteLine($"{connectionString}");
+        if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(queueName))
+        {
+            Console.WriteLine("Please set the SERVICE_BUS_CONNECTION_STRING and SERVICE_BUS_QUEUE_NAME environment variables.");
+            return;
+        }
+
+        await ReceiveMessagesAsync(connectionString, queueName);
+
     }
     
 
     public static async Task ReceiveMessagesAsync(string connectionString, string queueName)
     {
+        var clientOptions = new ServiceBusClientOptions
+        {
+            TransportType = ServiceBusTransportType.AmqpWebSockets
+        };
         // The ServiceBusClient is the main entry point.
-        await using var client = new ServiceBusClient(connectionString);
+        await using var client = new ServiceBusClient(connectionString, clientOptions);
 
         // Create a processor for the queue.
         // The processor will run in the background, continuously checking for messages.
